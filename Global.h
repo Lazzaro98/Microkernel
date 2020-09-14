@@ -26,10 +26,15 @@ public:
 	volatile static ListThr* listOfThreads;
 	volatile static PCB* Global::idleTr;
 	volatile static ListSem* listOfSemaphores;
+	volatile static PCB* Global::mainThread;
+
+	static void inicInterrupt();
+	static void restoreInterrupt();
 	static void lock();
 	static void unlock();
 
 	static void dodaj(Thread* thread);
+	static void timeDec();
 	Global();
 	virtual ~Global();
 };

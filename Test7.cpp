@@ -56,7 +56,6 @@ private:
 	Sem spaceAvailable, itemAvailable;
 	char* buffer;
 	int head, tail;
-
 };
 
 BoundedBuffer::BoundedBuffer (unsigned size) : Size(size),
@@ -101,6 +100,7 @@ public:
 	~Producer()
 	{
 		waitToComplete();
+		syncPrintf("Zavrsio sam Producer-a.\n");
 	}
 
 protected:
@@ -112,10 +112,14 @@ protected:
 			c = 65+(rand()%25);
 			buffer.append(c);
 			syncPrintf("%d. Producer %d puts '%c'\n",count,Thread::getRunningId(),c);
+			//syncPrintf("Vrednost mutex-a je %d. ",mutex.val());
 			mutex.wait(0);
+			//syncPrintf("Vrednost mutex-a je %d. ",mutex.val());
 			count--;
 			mutex.signal();
+			//syncPrintf("Vrednost mutex-a je %d.\n",mutex.val());
 		}
+
 	}
 };
 
@@ -126,6 +130,7 @@ public:
 	~Consumer()
 	{
 		waitToComplete();
+		syncPrintf("Zavrsio sam Consumera.\n");
 	}
 
 protected:
@@ -134,12 +139,15 @@ protected:
 		char c;
 		while(count>0)
 		{
+
 			c = buffer.take();
 			syncPrintf("%d. Consumer %d gets '%c'\n",count,Thread::getRunningId(),c);
+			//if(count==1) syncPrintf("Consumer je stigao do 0");
 			mutex.wait(0);
 			count--;
 			mutex.signal();
 		}
+
 	}
 };
 

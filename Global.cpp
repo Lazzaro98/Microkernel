@@ -8,7 +8,8 @@
 #include "Global.h"
 #include "ListThr.h"
 #include "ListSem.h"
-
+#include<dos.h>
+#include "idle.h"
 Global::Global() {
 	// TODO Auto-generated constructor stub
 
@@ -39,4 +40,39 @@ void Global::unlock(){
 	lockFlag = 0;
 	if(zahtevana_promena_konteksta)
 		PCB::dispatch(); //valjda je dobro ovo hm
+}
+
+void Global::timeDec(){
+#ifndef BCC_BLOCK_IGNORE
+	Global::listOfSemaphores->timeDecrementAll();
+#endif
+}
+
+typedef void interrupt (*pInterrupt)(...);
+
+static pInterrupt oldInterrupt;
+volatile PCB* Global::mainThread = 0;
+
+void Global::inicInterrupt(){
+	Global::lock();
+#ifndef BCC_BLOCK_IGNORE
+	oldInterrupt = getvect(0x8);
+	setvect(0x8,(pInterrupt)PCB::timer);
+	setvect(0x60,oldInterrupt);
+#endif
+	Global::idleTr = (new idle())->myPCB;
+	Global::idleTr->myThread->start();
+	Global::mainThread = (new Thread(0,2))->myPCB;
+	mainThread->state = PCB::READY;
+	running=mainThread;
+	PCB::brojac = running->timeSlice;
+	Global::unlock();
+}
+
+void Global::restoreInterrupt(){
+	Global::lock();
+#ifndef BCC_BLOCK_IGNORE
+	setvect(0x8,oldInterrupt);
+#endif
+	Global::unlock();
 }

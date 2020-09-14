@@ -27,7 +27,7 @@ public:
 
 	Queue* listaBlokiranihNaSemaforu;
 	int wait(Time maxTimeToWait);
-	int signal(int n=0);
+	int signal(int n=1);
 	KerSem(int init, Sem *sem1);
 	virtual ~KerSem();
 

@@ -49,6 +49,7 @@ void Thread::dispatch(){
 	Global::running->dispatch();
 }
 extern int syncPrintf(const char *format, ...);
+
 void Thread::waitToComplete(){
 	Global::lock();
 	if(myPCB == 0 || myPCB->state == PCB::FINISHED || myPCB == (PCB*)Global::running){ // dodaj main
@@ -62,6 +63,6 @@ void Thread::waitToComplete(){
 	//red blokiranih u pcbu
 	//u wrapperu prodjem kroz red od niti i vratim ih u scheduler i promenim im stanje
 	this->myPCB->listBlokiranih->add((PCB*)Global::running);
-	PCB::dispatch();
 	Global::unlock();
+	PCB::dispatch();
 }

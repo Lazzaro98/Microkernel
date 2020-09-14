@@ -8,6 +8,9 @@
 #include "Queue.h"
 #include "PCB.h"
 #include "SCHEDULE.H"
+
+extern int syncPrintf(const char *format, ...);
+
 Queue::Queue() {
 	// TODO Auto-generated constructor stub
 	first = last = 0;
@@ -26,7 +29,9 @@ void Queue::put(PCB* pcb1,Time time1){
 		first = last = novi;
 	else
 		last = last->next = novi;
+	//syncPrintf(" + Pre nego sto putujem broj onih koji cekaju je %d. ", num);
 	num++;
+	//syncPrintf("Putovano i sada ih ima %d\n",num);
 }
 
 PCB* Queue::get(){
@@ -39,7 +44,9 @@ PCB* Queue::get(){
 	del->pcb = 0;
 	del->next = 0;
 	delete del;
+	//syncPrintf(" - Pre nego sto getujem broj onih koji cekaju je %d. ", num);
 	num--;
+	//syncPrintf("Getovano i sada ih ima %d\n",num);
 	return pom;
 }
 

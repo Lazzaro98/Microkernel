@@ -19,6 +19,10 @@ volatile static unsigned tsp;
 
 class Global;
 
+extern void tick();
+
+extern int syncPrintf(const char *format, ...);
+
 volatile unsigned PCB::brojac=20; //ovde nesto nije htelo hm
 ListThr *PCB::listOfThreads = new ListThr();
 static ID id_br = 0;
@@ -85,11 +89,14 @@ ID PCB::getId(){
 }
 
 void interrupt PCB::timer(){
-	if(Global::zahtevana_promena_konteksta==0)
+
+	if(Global::zahtevana_promena_konteksta==0){
+		tick();
+		Global::timeDec();
 		if(PCB::brojac>0)
 			if(((PCB*)Global::running)->timeSlice!=0)
 			PCB::brojac--;
-
+	}
 	if((PCB::brojac == 0 && Global::running->timeSlice!=0) || Global::zahtevana_promena_konteksta){
 				asm {
 					mov tss, ss
@@ -114,17 +121,17 @@ void interrupt PCB::timer(){
 				tss = Global::running->ss;
 				tbp = Global::running->bp;
 
-				PCB::brojac = ((PCB*)Global::running->bp)->timeSlice;
+				PCB::brojac = ((PCB*)Global::running)->timeSlice;
 
 				asm{
 					mov ss,tss
 					mov sp, tsp
 					mov bp, tbp
 				}
+	}
 				if(!Global::zahtevana_promena_konteksta) asm int 60h;
 				Global::zahtevana_promena_konteksta = 0;
 
-	}
 
 }
 
