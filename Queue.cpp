@@ -61,19 +61,36 @@ void Queue::emptyList(){
 	first=last=0;
 }
 
+void Queue::ispisiListu(){
+	Elem* pom = first;
+	syncPrintf("Red cekanja izlgeda ovako: ");
+	while(pom){
+		syncPrintf("%d ", pom->pcb->getId());
+		pom=pom->next;
+	}
+	syncPrintf("\n");
+}
+
+extern int syncPrintf(const char *format, ...);
 void Queue::timeDec(){
+
 	Global::lock();
 	Elem* k = first,*pom = 0;
-	while(k){
-		if(k->timeToWait>0) k->timeToWait--;
+	/*while(k){
+		if(k->timeToWait>0) {k->timeToWait--; syncPrintf("%d vreme se smanjilo na %d\n", k->pcb->getId(),k->timeToWait);}
 		if(k->timeToWait==0){ // treba ga izbaciti iz liste. Pamticemo trenutni i prethodni da bismo mogli lako de prevezemo listu
+			syncPrintf("izbacujem %d zato sto je %d\n",k->pcb->getId(),k->timeToWait);
+			ispisiListu();
 			if(k == first){
 				k->pcb->blkFlag = 0;
 				k->pcb->state = PCB::READY;
 				Scheduler::put(k->pcb);
+				first = first->next;
 				delete k;
-				first = last = 0;
-				k = pom = 0;
+				if(!first){
+					first = last = 0;
+					k = pom = 0;
+				}
 			}
 			else {
 				k->pcb->blkFlag = 0;
@@ -86,11 +103,50 @@ void Queue::timeDec(){
 				k=k->next;
 			}
 			num--;
+			ispisiListu();
 		}
 		else {
+		syncPrintf("Nisam izbacio zato sto je %d\n",k->timeToWait);
 		pom = k;
 		k=k->next;
 	}
+}*/
+
+	while(k){
+		if(k->timeToWait>0){
+			k->timeToWait--;
+			if(!k->timeToWait){
+				if(k == first){
+					k->pcb->blkFlag=0;
+					k->pcb->state = PCB::READY;
+					Scheduler::put(k->pcb);
+					if(first == last)
+						first=last=0;
+					else
+						first=first->next;
+					delete k;
+					k=first;
+				}else {
+					k->pcb->blkFlag=0;
+					k->pcb->state = PCB::READY;
+					Scheduler::put(k->pcb);
+					pom->next=k->next;
+					k->next=0;
+					if(k==last)
+						last=pom;
+					delete k;
+					k=pom->next;
+				}
+				num--;
+			} else{
+				pom=k;
+				k=k->next;
+			}
+		}else {
+			pom=k;
+			k=k->next;
+		}
+	}
 	Global::unlock();
-}
+
 }

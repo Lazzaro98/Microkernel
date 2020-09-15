@@ -26,6 +26,7 @@ public:
 	Elem *first, *last;
 	int num;
 
+	void ispisiListu();
 	void put(PCB* pcb, Time time);
 	PCB* get();
 	void emptyList();
