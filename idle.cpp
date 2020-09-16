@@ -6,10 +6,9 @@
  */
 
 #include "idle.h"
-
-idle::idle() {
+extern int syncPrintf(const char *format, ...);
+idle::idle(StackSize stackSize, Time timeSlice) {
 	// TODO Auto-generated constructor stub
-
 }
 
 idle::~idle() {
@@ -17,5 +16,7 @@ idle::~idle() {
 }
 
 void idle::run(){
-	while(1){}
+	while(1){
+		syncPrintf(".");
+	}
 }

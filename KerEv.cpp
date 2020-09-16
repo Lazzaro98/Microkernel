@@ -17,10 +17,8 @@ KerEv::KerEv(IVTNo ivtNo) {
 	evVal=0;
 	myThread=(PCB*)Global::running;
 	blocked=0;
-	//IVTEntry::table[ivtNo]->myImpl=this;
-#ifndef BCC_BLOCK_IGNORE
-	IVTEntry::dodaj(ivtNo, this);
-#endif
+	IVTEntry::table[ivtNo]->myImpl=this;
+
 }
 
 KerEv::~KerEv() {

@@ -15,7 +15,7 @@ public:
 
 	virtual void run();
 
-	idle();
+	idle(StackSize stackSize = defaultStackSize, Time timeSlice = defaultTimeSlice);
 	virtual ~idle();
 };
 

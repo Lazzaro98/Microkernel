@@ -41,7 +41,7 @@ PCB* ListPCB::get() {
 	pom=first;
 	pcbret=pom->pcb;
 	first=first->next;
-	if(!first)
+	if(first==0)
 		first=last=0;
 	delete pom;
 	return pcbret;

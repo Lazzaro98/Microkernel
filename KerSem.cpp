@@ -21,12 +21,13 @@ KerSem::KerSem(int init, Sem* sem1) {
 	Global::unlock();
 }
 void KerSem::block(Time timeToWait1){
-	if(Global::running == Global::idleTr) return;
+	if(Global::running == Global::idleTr)return;
 	if(timeToWait1 == 0) timeToWait1 = -1;
 	Global::running->state = PCB::BLOCKED;
 	listaBlokiranihNaSemaforu->put((PCB*)Global::running, timeToWait1);
 	//syncPrintf("Dodao sam na listu i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
-}
+	}
+
 void KerSem::unblock(){
 	PCB* pom = this->listaBlokiranihNaSemaforu->get();
 	//syncPrintf("Skinuo sam sa liste i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
@@ -37,7 +38,23 @@ void KerSem::unblock(){
 int KerSem::wait(Time maxTimeToWait){
 	Global::lock();
 	if(maxTimeToWait<0) maxTimeToWait=0;
-	semVal--;
+
+	int ind = 0;
+	if(--semVal<0){
+		ind =1;
+		block(maxTimeToWait);
+	}
+	if(ind==1){
+		Global::unlock();
+		Global::running->dispatch();
+	}
+
+	else {
+		Global::running->blkFlag=1;
+		Global::unlock();
+	}
+
+	/*semVal--;
 	if(semVal<0){
 		block(maxTimeToWait);
 		Global::unlock();
@@ -57,7 +74,7 @@ int KerSem::wait(Time maxTimeToWait){
 }
 int KerSem::signal(int n){
 	Global::lock();
-	if(n<0) return n; // ako je negativni broj
+/*	if(n<0) return n; // ako je negativni broj
 
 	if(n == 0) n=1;
 	//syncPrintf("broj blokiranih je %d\n",n);
@@ -66,6 +83,26 @@ int KerSem::signal(int n){
 	semVal+=n;
 	for(int i=0;i<n;i++)
 		unblock();
+	Global::unlock();*/
+	if(n==0){
+		if(semVal++<0) unblock();
+		Global::unlock();
+		return 0;
+	}
+	else if (n>0){
+		int t=0;
+		int p=n;
+		if(n>listaBlokiranihNaSemaforu->num < n)
+			n=listaBlokiranihNaSemaforu->num;
+		while (n!=0){
+			unblock();
+			n--;
+			t++;
+		}
+		semVal+=p;
+		Global::unlock();
+		return t;
+	}
 	Global::unlock();
 	return n;
 

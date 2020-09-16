@@ -12,7 +12,7 @@
 
 class ListSem {
 public:
-
+	int num;
 	struct Elem {
 		KerSem* sem;
 		Elem* next;

@@ -20,9 +20,10 @@ Thread::Thread(StackSize stackSize, Time timeSlice) {
 
 Thread::~Thread() {
 	// TODO Auto-generated destructor stub
+	waitToComplete();
 	delete myPCB;
 	myPCB=0;
-	waitToComplete();
+
 }
 
 void Thread::start(){
@@ -52,17 +53,11 @@ extern int syncPrintf(const char *format, ...);
 
 void Thread::waitToComplete(){
 	Global::lock();
-	if(myPCB == 0 || myPCB->state == PCB::FINISHED || myPCB == (PCB*)Global::running){ // dodaj main
-		Global::unlock();
-		//syncPrintf("%d Nisam uradio nista\n", myPCB->myThread->getId());
-		return;
-	}
-	//syncPrintf("%d se blokirala i prepustila vreme drugom procesu\n",myPCB->myThread->getId());
+	if(myPCB != (PCB*)Global::running && myPCB!=0 && myPCB->state != PCB::FINISHED)
+	{
+	myPCB->listBlokiranih->add((PCB*)Global::running);
 	Global::running->state = PCB::BLOCKED;
-	//u pcb od t1 stavi pcb running
-	//red blokiranih u pcbu
-	//u wrapperu prodjem kroz red od niti i vratim ih u scheduler i promenim im stanje
-	this->myPCB->listBlokiranih->add((PCB*)Global::running);
+	Global::running->dispatch();
+	}
 	Global::unlock();
-	PCB::dispatch();
 }

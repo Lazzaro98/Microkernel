@@ -10,6 +10,8 @@
 #include "Global.h"
 #include "KerEv.h"
 
+volatile IVTEntry* IVTEntry::table[num]={0};
+
 IVTEntry::IVTEntry(IVTNo ivtNo1,pInterrupt pint1) {
 	// TODO Auto-generated constructor stub
 	ivtNo=ivtNo1;
@@ -20,7 +22,8 @@ IVTEntry::IVTEntry(IVTNo ivtNo1,pInterrupt pint1) {
 	setvect(ivtNo,pint1);
 #endif
 	Global::unlock();
-	table[ivtNo]=this;
+	IVTEntry::table[ivtNo]=this;
+	//dodaj(ivtNo,);
 }
 
 IVTEntry::~IVTEntry() {
@@ -36,7 +39,7 @@ IVTEntry::~IVTEntry() {
 }
 
 void IVTEntry::signal(){
-	myImpl->signal();
+	this->myImpl->signal();
 }
 
 void IVTEntry::callOld(){

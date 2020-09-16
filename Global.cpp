@@ -60,7 +60,7 @@ void Global::inicInterrupt(){
 	setvect(0x8,(pInterrupt)PCB::timer);
 	setvect(0x60,oldInterrupt);
 #endif
-	Global::idleTr = (new idle())->myPCB;
+	Global::idleTr = (new idle(300,2))->myPCB;
 	Global::idleTr->myThread->start();
 	Global::mainThread = (new Thread(0,2))->myPCB;
 	mainThread->state = PCB::READY;

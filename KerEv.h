@@ -21,6 +21,7 @@ public:
 	PCB* myThread;
 
 	friend class IVTEntry;
+	friend class Event;
 
 	void wait();
 	void signal();

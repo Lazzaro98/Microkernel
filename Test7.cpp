@@ -2,8 +2,8 @@
 #include <iostream.h>
 #include <stdlib.h>
 #include "Sem.h"
-#include "Global.h"
 #include "PCB.h"
+extern int syncPrintf(const char *format, ...);
 
 /*
  	 Test: Semafori bez realizacije spavanja, deo javnog testa
@@ -12,7 +12,7 @@
 const int n = 10;
 int count = 100;
 Sem mutex(1);
-extern int syncPrintf(const char *format, ...);
+
 int mutex_glb = 1;
 
 void mutex_glb_wait(){
@@ -30,16 +30,6 @@ void mutex_glb_wait(){
 #define intLock mutex_glb_wait();
 #define intUnlock mutex_glb = 1;
 
-static unsigned long next = 1;
-/* RAND_MAX assumed to be 32767 */
-int rand(void) {
-    next = next * 1103515245 + 12345;
-    return((unsigned)(next/65536) % 32768);
-}
-void srand(unsigned seed) {
-    next = seed;
-}
-
 
 class BoundedBuffer {
 public:
@@ -56,6 +46,7 @@ private:
 	Sem spaceAvailable, itemAvailable;
 	char* buffer;
 	int head, tail;
+
 };
 
 BoundedBuffer::BoundedBuffer (unsigned size) : Size(size),
@@ -100,7 +91,6 @@ public:
 	~Producer()
 	{
 		waitToComplete();
-		syncPrintf("Zavrsio sam Producer-a.\n");
 	}
 
 protected:
@@ -112,14 +102,10 @@ protected:
 			c = 65+(rand()%25);
 			buffer.append(c);
 			syncPrintf("%d. Producer %d puts '%c'\n",count,Thread::getRunningId(),c);
-			//syncPrintf("Vrednost mutex-a je %d. ",mutex.val());
 			mutex.wait(0);
-			//syncPrintf("Vrednost mutex-a je %d. ",mutex.val());
 			count--;
 			mutex.signal();
-			//syncPrintf("Vrednost mutex-a je %d.\n",mutex.val());
 		}
-
 	}
 };
 
@@ -130,7 +116,6 @@ public:
 	~Consumer()
 	{
 		waitToComplete();
-		syncPrintf("Zavrsio sam Consumera.\n");
 	}
 
 protected:
@@ -139,19 +124,26 @@ protected:
 		char c;
 		while(count>0)
 		{
-
 			c = buffer.take();
 			syncPrintf("%d. Consumer %d gets '%c'\n",count,Thread::getRunningId(),c);
-			//if(count==1) syncPrintf("Consumer je stigao do 0");
 			mutex.wait(0);
 			count--;
 			mutex.signal();
 		}
-
 	}
 };
 
 void tick(){}
+
+static unsigned long next = 1;
+/* RAND_MAX assumed to be 32767 */
+int rand(void) {
+    next = next * 1103515245 + 12345;
+    return((unsigned)(next/65536) % 32768);
+}
+void srand(unsigned seed) {
+    next = seed;
+}
 
 int userMain(int argc, char** argv)
 {
@@ -160,6 +152,8 @@ int userMain(int argc, char** argv)
 	Consumer c;
 	p.start();
 	c.start();
+	p.waitToComplete();
+	c.waitToComplete();
 	syncPrintf("Test ends.\n");
 	return 0;
 }

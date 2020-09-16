@@ -110,7 +110,7 @@ void interrupt PCB::timer(){
 				Global::running->bp = tbp;
 
 				if(Global::running->state==PCB::READY && (PCB*)Global::running!=(PCB*)Global::idleTr)
-				Scheduler::put((PCB*)Global::running);
+					Scheduler::put((PCB*)Global::running);
 
 				Global::running = Scheduler::get();
 
