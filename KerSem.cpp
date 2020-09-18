@@ -11,101 +11,17 @@
 
 extern int syncPrintf(const char *format, ...);
 
-KerSem::KerSem(int init, Sem* sem1) {
+KerSem::KerSem(int initVal, Semaphore* sem1) {
 	// TODO Auto-generated constructor stub
-	Global::lock();
 	sem = sem1;
-	semVal = init;
-	listaBlokiranihNaSemaforu = new Queue();
+	semVal = initVal;
+	testId=0;
 	((ListSem*)Global::listOfSemaphores)->add(this);
-	Global::unlock();
-}
-void KerSem::block(Time timeToWait1){
-	if(Global::running == Global::idleTr)return;
-	if(timeToWait1 == 0) timeToWait1 = -1;
-	Global::running->state = PCB::BLOCKED;
-	listaBlokiranihNaSemaforu->put((PCB*)Global::running, timeToWait1);
-	//syncPrintf("Dodao sam na listu i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
-	}
-
-void KerSem::unblock(){
-	PCB* pom = this->listaBlokiranihNaSemaforu->get();
-	//syncPrintf("Skinuo sam sa liste i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
-	pom->state = PCB::READY;
-	Scheduler::put(pom);
+	listaBlokiranihNaSemaforu = new Queue();
 }
 
-int KerSem::wait(Time maxTimeToWait){
-	Global::lock();
-	if(maxTimeToWait<0) maxTimeToWait=0;
-
-	int ind = 0;
-	if(--semVal<0){
-		ind =1;
-		block(maxTimeToWait);
-	}
-	if(ind==1){
-		Global::unlock();
-		Global::running->dispatch();
-	}
-
-	else {
-		Global::running->blkFlag=1;
-		Global::unlock();
-	}
-
-	/*semVal--;
-	if(semVal<0){
-		block(maxTimeToWait);
-		Global::unlock();
-		Global::running->dispatch();
-	}
-	else {
-		Global::running->blkFlag = 1;
-		Global::unlock();
-	}
-
-	/*if(maxTimeToWait!=0) return 1;
-	Global::unlock();
-	return 0;*/
-	if(Global::running->blkFlag==0)
-		semVal++;
-	return Global::running->blkFlag;
-}
-int KerSem::signal(int n){
-	Global::lock();
-/*	if(n<0) return n; // ako je negativni broj
-
-	if(n == 0) n=1;
-	//syncPrintf("broj blokiranih je %d\n",n);
-	//if(this->listaBlokiranihNaSemaforu->num < n) n = listaBlokiranihNaSemaforu->num;
-	//syncPrintf("broj blokiranih je %d\n",n);
-	semVal+=n;
-	for(int i=0;i<n;i++)
-		unblock();
-	Global::unlock();*/
-	if(n==0){
-		if(semVal++<0) unblock();
-		Global::unlock();
-		return 0;
-	}
-	else if (n>0){
-		int t=0;
-		int p=n;
-		if(n>listaBlokiranihNaSemaforu->num < n)
-			n=listaBlokiranihNaSemaforu->num;
-		while (n!=0){
-			unblock();
-			n--;
-			t++;
-		}
-		semVal+=p;
-		Global::unlock();
-		return t;
-	}
-	Global::unlock();
-	return n;
-
+void KerSem::setTestId(int id1){
+	this->testId=id1;
 }
 
 KerSem::~KerSem() {
@@ -113,5 +29,71 @@ KerSem::~KerSem() {
 	Global::lock();
 	((ListSem*)Global::listOfSemaphores)->remove(this);
 	Global::unlock();
+}
+
+void KerSem::block(Time timeToWait1){
+	if(Global::running == Global::idleTr) return;
+	Global::running->state = PCB::BLOCKED;
+	int time;
+	if(timeToWait1 == 0)
+		{
+		time = -1;
+		}
+	else {
+		time=timeToWait1;
+	}
+	//syncPrintf("Sada cu dodati na liostu semafora\n");
+	listaBlokiranihNaSemaforu->put((PCB*)Global::running, time);
+	//syncPrintf("Dodao sam na listu i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
+}
+
+int KerSem::wait(Time maxTimeToWait){
+	int time;
+	if(maxTimeToWait>=0)
+	{
+		time = maxTimeToWait;
+	}
+	else
+	{
+		time = 0;
+	}
+
+	semVal--;
+	if(semVal<0){
+		block(maxTimeToWait);
+		PCB::dispatch();
+	}
+	else {
+		Global::running->blkFlag=1;
+	}
+	if(!Global::running->blkFlag) semVal++;
+	if(Global::running->blkFlag) return 1;
+	else return 0;
+}
+int KerSem::signal(int n){
+
+	if(n<0){}
+	else if(n==0){
+		semVal++;
+		if(semVal<0)
+		{
+			PCB* pom = this->listaBlokiranihNaSemaforu->get();
+			//syncPrintf("Skinuo sam sa liste i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
+			pom->state = PCB::READY;
+			Scheduler::put(pom);
+		}
+	}
+	else {
+		int pom=n;
+		if(n>listaBlokiranihNaSemaforu->num) n=listaBlokiranihNaSemaforu->num;
+		for(int i=0;i<n;i++) {
+			PCB* pom = this->listaBlokiranihNaSemaforu->get();
+			//syncPrintf("Skinuo sam sa liste i sada ih ima %d\n",listaBlokiranihNaSemaforu->num);
+			pom->state = PCB::READY;
+			Scheduler::put(pom);
+		}
+		semVal=semVal+pom;
+	}
+	return n;
 }
 

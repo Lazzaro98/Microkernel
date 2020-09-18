@@ -18,45 +18,46 @@ KerEv::KerEv(IVTNo ivtNo) {
 	myThread=(PCB*)Global::running;
 	blocked=0;
 	IVTEntry::table[ivtNo]->myImpl=this;
-
 }
 
-KerEv::~KerEv() {
-	// TODO Auto-generated destructor stub
-	if(blocked){
-		blocked->state=PCB::READY;
-		Scheduler::put(blocked);
-	}
+void KerEv::unisti(){
+	if(blocked) staviUskedz(blocked);
 	delete blocked;
-	delete myThread;
 	blocked=0;
 	myThread=0;
 }
 
+void KerEv::signal(){
+	Global::lock();
+	if(blocked) {
+		staviUskedz(myThread);
+		blocked=0;
+		Global::running->dispatch();
+	}
+	else evVal=0;
+	Global::unlock();
+}
+
+KerEv::~KerEv() {
+	// TODO Auto-generated destructor stub
+	this->unisti();
+}
+
+
 void KerEv::wait(){
 	if((PCB*)Global::running != myThread)return;
 	Global::lock();
-	if(evVal==0){
+	if(!evVal){
 		myThread->state = PCB::BLOCKED;
 		blocked=myThread;
 		PCB::dispatch();
 	}
-	else{
-		evVal=0;
-	}
+	else evVal=0;
 	Global::unlock();
 }
 
 
-void KerEv::signal(){
-	Global::lock();
-	if(!blocked)
-		evVal=1;
-	else {
-		myThread->state = PCB::READY;
-		blocked=0;
-		Scheduler::put(myThread);
-		PCB::dispatch();
-	}
-	Global::unlock();
+void KerEv::staviUskedz(PCB* nit){
+	nit->state=PCB::READY;
+	Scheduler::put(nit);
 }

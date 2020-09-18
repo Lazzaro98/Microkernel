@@ -8,7 +8,7 @@
 #include "Thread.h"
 #include "PCB.h"
 #include "Global.h"
-#include "ListThr.h"
+//#include "ListThr.h"
 
 class PCB;
 class Global;
@@ -22,25 +22,22 @@ Thread::~Thread() {
 	// TODO Auto-generated destructor stub
 	waitToComplete();
 	delete myPCB;
-	myPCB=0;
+	myPCB = 0;
 
 }
 
 void Thread::start(){
 	if(this->myPCB != 0 && this->myPCB->state == PCB::CREATED){
 		Global::lock();
-		this->myPCB->createProcess();
+		if(myPCB!=0) this->myPCB->createProcess();
 		Global::unlock();
 	}
 }
 
-int Thread::getId(){
+ID Thread::getId(){
 	return this->myPCB->id;
 }
 
-Thread* Thread::getThreadById(ID id1){
-	return Global::listOfThreads->getThreadById(id1);
-}
 
 ID Thread::getRunningId() {
 	return Global::running->id;
@@ -53,11 +50,17 @@ extern int syncPrintf(const char *format, ...);
 
 void Thread::waitToComplete(){
 	Global::lock();
-	if(myPCB != (PCB*)Global::running && myPCB!=0 && myPCB->state != PCB::FINISHED)
-	{
-	myPCB->listBlokiranih->add((PCB*)Global::running);
-	Global::running->state = PCB::BLOCKED;
-	Global::running->dispatch();
+	if(myPCB != (PCB*)Global::running && myPCB!=0 && myPCB->state != PCB::FINISHED){
+		Global::running->state = PCB::BLOCKED;
+		myPCB->listBlokiranih->add((PCB*)Global::running);
+		Global::unlock();
+		//syncPrintf("Pokrecem dispatch u waitToComplete-u. ID = %d \n",Global::running->id);
+		PCB::dispatch();
+		//syncPrintf("Izasao sam iz waitToCompelte-a. ID = %d \n ", Global::running->id);
 	}
-	Global::unlock();
+	else {
+		Global::unlock();
+	}
 }
+
+

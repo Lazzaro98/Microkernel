@@ -8,46 +8,23 @@
 #include "ListPCB.h"
 #include "PCB.h"
 #include "SCHEDULE.H"
+
+extern int syncPrintf(const char *format, ...);
+
 ListPCB::ListPCB() {
 	// TODO Auto-generated constructor stub
 	first=last=0;
-
 }
 
-void ListPCB::listDel(){
-	Elem* pom = 0;
-	while(first){
-		pom=first;
-		first=first->next;
-		pom->pcb = 0;
-		pom->next=0;
-		delete pom;
-	}
-	first=last=0;
-}
-
-void ListPCB::add(PCB* pcb1){
-	Elem *novi = new Elem(pcb1);
-	if(!first)
-		first=last=novi;
-	else
-		last=last->next=novi;
-}
 
 PCB* ListPCB::get() {
-	Elem* pom;
-	PCB* pcbret;
-	if(!first)return 0;
-	pom=first;
-	pcbret=pom->pcb;
-	first=first->next;
-	if(first==0)
-		first=last=0;
+	if(!first) return 0;
+	Elem* pom=first;
+	PCB* ret = pom->pcb;
 	delete pom;
-	return pcbret;
-}
-ListPCB::~ListPCB() {
-	listDel();
+	if(first->next==0)first=last=0;
+	else first=first->next;
+	return ret;
 }
 
 void ListPCB::oslobodiBlokirane(){
@@ -57,6 +34,33 @@ void ListPCB::oslobodiBlokirane(){
 		tek->pcb->state = PCB::READY;
 		Scheduler::put(tek->pcb);
 		Global::unlock();
+		//syncPrintf("oslobadjam Blokirane---------------\n");
 	}
-	delete this;
 }
+
+ListPCB::~ListPCB() {
+	Elem* pom = 0;
+		while(first){
+			pom=first;
+			first=first->next;
+			pom->pcb = 0;
+			pom->next=0;
+			delete pom;
+		}
+		first = last = 0;
+}
+
+void ListPCB::add(PCB* pcb1){
+	Elem *novi = new Elem(pcb1);
+	if(!first) first=last=novi;
+	else last=last->next=novi;
+}
+
+void ListPCB::ispisiListu(){
+	Elem* pom = first;
+	while(pom){
+		syncPrintf("%d ",pom->pcb->id);
+		pom=pom->next;
+	}
+}
+

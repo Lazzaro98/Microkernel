@@ -9,13 +9,15 @@
 
 Event::Event(IVTNo ivtNo) {
 	// TODO Auto-generated constructor stub
+	Global::lock();
 	myImpl = new KerEv(ivtNo);
+	Global::unlock();
 }
 
 Event::~Event() {
 	// TODO Auto-generated destructor stub
-	myImpl=0;
 	delete myImpl;
+	myImpl=0;
 }
 
 void Event::wait(){

@@ -16,7 +16,6 @@ idle::~idle() {
 }
 
 void idle::run(){
-	while(1){
-		syncPrintf(".");
-	}
+	//syncPrintf("Uso sam ");
+	while(1);
 }

@@ -10,42 +10,43 @@
 #include "Global.h"
 #include "KerEv.h"
 
-volatile IVTEntry* IVTEntry::table[num]={0};
+volatile IVTEntry* IVTEntry::table[Nt]={0};
 
 IVTEntry::IVTEntry(IVTNo ivtNo1,pInterrupt pint1) {
 	// TODO Auto-generated constructor stub
-	ivtNo=ivtNo1;
-	myImpl=0;
 	Global::lock();
 #ifndef BCC_BLOCK_IGNORE
-	oldRoutine = getvect(ivtNo);
+	ivtNo=ivtNo1;
+	myImpl=0;
+	oldRout = getvect(ivtNo);
 	setvect(ivtNo,pint1);
+	IVTEntry::table[ivtNo]=this;
 #endif
 	Global::unlock();
-	IVTEntry::table[ivtNo]=this;
 	//dodaj(ivtNo,);
+}
+
+
+void IVTEntry::signal(){
+	this->myImpl->signal();
+}
+
+void IVTEntry::old(){
+	oldRout();
+}
+
+void IVTEntry::dodaj(IVTNo ivtNo, KerEv* x){
+	//table[ivtNo]->myImpl=x;
 }
 
 IVTEntry::~IVTEntry() {
 	// TODO Auto-generated destructor stub
 	Global::lock();
 #ifndef BCC_BLOCK_IGNORE
-	setvect(ivtNo,oldRoutine);
+	setvect(ivtNo,oldRout);
 #endif
 	Global::unlock();
 	delete myImpl;
 	myImpl=0;
-	oldRoutine=0;
-}
-
-void IVTEntry::signal(){
-	this->myImpl->signal();
-}
-
-void IVTEntry::callOld(){
-	oldRoutine();
-}
-
-void IVTEntry::dodaj(IVTNo ivtNo, KerEv* x){
-	//table[ivtNo]->myImpl=x;
+	oldRout=0;
 }

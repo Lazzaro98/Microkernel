@@ -9,7 +9,7 @@
 #include "SCHEDULE.H"
 #include <dos.h>
 #include "Global.h"
-#include "ListThr.h"
+//#include "ListThr.h"
 #include "ListPCB.h"
 #define MAX_STACK_SIZE 65535
 
@@ -24,43 +24,49 @@ extern void tick();
 extern int syncPrintf(const char *format, ...);
 
 volatile unsigned PCB::brojac=20; //ovde nesto nije htelo hm
-ListThr *PCB::listOfThreads = new ListThr();
+//ListThr *PCB::listOfThreads = new ListThr();
 static ID id_br = 0;
 
 PCB::PCB(Time timeSlice1, Thread* myThread1, StackSize stackSize1) {
 	// TODO Auto-generated constructor stub
-	if(stackSize>MAX_STACK_SIZE)
-		stackSize1=MAX_STACK_SIZE;
-	ss=sp=bp=0;
+	StackSize stacksizex;
+	if(stackSize1>MAX_STACK_SIZE) stacksizex = MAX_STACK_SIZE;
+	else stacksizex=stackSize1;
 	timeSlice = timeSlice1;
-	stackSize = stackSize1;
-	myThread = myThread1;
 	state = CREATED;
+	myThread = myThread1;
+	stackSize = stacksizex;
 	id = id_br++;
 	blkFlag = 1;
+	ss=0;sp=0;bp=0;
 	stack  = new unsigned[stackSize];
-	Global::dodaj(myThread);
+	//Global::dodaj(myThread);
 	listBlokiranih = new ListPCB();
 }
 
 void PCB::dispatch(){
+	// <------------- Greska u sledecih 4 linije, najverovatnije u tajmeru
+	//if(Global::waitToCompleteTest==10)return;
 	asm cli
 	Global::zahtevana_promena_konteksta = 1;
 	timer();
 	asm sti
+//	syncPrintf("zavrsio sam dispatch.--------------------------\n");
 }
 void PCB::wrapper(){
 	Global::running->myThread->run();
+	//ncPrintf("Sada cu da poyovem oslobodiBlokirane\n");
 	Global::running->listBlokiranih->oslobodiBlokirane(); //kada nit zavrsi s izvrsavanjem, oslobodi sve one koje su cekale nju da se zavrsi
+	//ncPrintf("Pozvao sam oslobodiBlokirane\n");
 	Global::running->state=FINISHED;
-	PCB::dispatch();
+	//PCB::dispatch();
 	//izadji ovde
 
 }
 void PCB::createProcess() {
 #ifndef BCC_BLOCK_IGNORE
-	stack[stackSize - 1] = FP_SEG(myThread);
-	stack[stackSize - 2] = FP_OFF(myThread);
+	stack[stackSize - 3] = FP_SEG(dispatch);
+	stack[stackSize - 4] = FP_OFF(dispatch);
 	stack[stackSize - 5] = 0x200;
 	stack[stackSize - 6] = FP_SEG(wrapper);
 	stack[stackSize - 7] = FP_OFF(wrapper);
@@ -71,17 +77,16 @@ void PCB::createProcess() {
 #endif
 	this->state = READY;
 
-	if(this != Global::idleTr)
-		Scheduler::put(this);
+	if(this != Global::idleTr) Scheduler::put(this);
 
 }
 
 PCB::~PCB() {
 	// TODO Auto-generated destructor stub
-	this->myThread->myPCB = 0;
 	this->myThread = 0;
 	delete[] stack;
 	stack = 0;
+	delete listBlokiranih;
 }
 
 ID PCB::getId(){
@@ -89,22 +94,22 @@ ID PCB::getId(){
 }
 
 void interrupt PCB::timer(){
-
 	if(Global::zahtevana_promena_konteksta==0){
 		tick();
 		Global::timeDec();
 		if(PCB::brojac>0)
 			if(((PCB*)Global::running)->timeSlice!=0)
-			PCB::brojac--;
+				PCB::brojac--;
 	}
 	if((PCB::brojac == 0 && Global::running->timeSlice!=0) || Global::zahtevana_promena_konteksta){
+		/*if(Global::zahtevana_promena_konteksta){
+			syncPrintf("---------------------test\n");
+		}*/
 				asm {
 					mov tss, ss
 					mov tsp, sp
 					mov tbp, bp
 				}
-
-
 				Global::running->ss = tss;
 				Global::running->sp = tsp;
 				Global::running->bp = tbp;
@@ -114,8 +119,7 @@ void interrupt PCB::timer(){
 
 				Global::running = Scheduler::get();
 
-				if(Global::running==0)
-					Global::running = Global::idleTr;
+				if(Global::running==0) Global::running = Global::idleTr;
 
 				tsp = Global::running->sp;
 				tss = Global::running->ss;
