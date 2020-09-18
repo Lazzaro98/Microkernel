@@ -26,7 +26,7 @@ public:
 	PCB* get();
 	void listDel();
 	void oslobodiBlokirane();
-
+	void ispisiListu();
 	ListPCB();
 	virtual ~ListPCB();
 };

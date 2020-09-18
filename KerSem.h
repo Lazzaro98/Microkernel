@@ -17,20 +17,21 @@ class KerSem {
 private:
 public:
 
-	friend class Sem;
+	friend class Semaphore;
 
 	friend class ListSem;
 
-	Sem *sem;
+	Semaphore *sem;
 	int semVal;
-
+	int testId;
 
 	Queue* listaBlokiranihNaSemaforu;
 	int wait(Time maxTimeToWait);
 	int signal(int n=1);
-	KerSem(int init, Sem *sem1);
+	KerSem(int init, Semaphore *sem1);
 	virtual ~KerSem();
 
+	void setTestId(int id1=0);
 	void block(Time timeToWait1);
 	void unblock();
 };

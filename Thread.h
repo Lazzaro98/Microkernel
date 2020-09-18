@@ -25,7 +25,6 @@ class Thread {
 		virtual ~Thread();
 		ID getId();
 		static ID getRunningId();
-		static Thread* getThreadById(ID id);
 
 		virtual void run() {}
 	protected:

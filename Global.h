@@ -21,9 +21,10 @@ public:
 	friend class Semaphore;
 	friend class ListSem;
 
+	volatile static int waitToCompleteTest;
 	volatile static int zahtevana_promena_konteksta;
 	volatile static PCB* running;
-	volatile static ListThr* listOfThreads;
+	//volatile static ListThr* listOfThreads;
 	volatile static PCB* Global::idleTr;
 	volatile static ListSem* listOfSemaphores;
 	volatile static PCB* Global::mainThread;

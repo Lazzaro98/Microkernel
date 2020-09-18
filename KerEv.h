@@ -23,6 +23,8 @@ public:
 	friend class IVTEntry;
 	friend class Event;
 
+	void unisti();
+	void staviUskedz(PCB* nit);
 	void wait();
 	void signal();
 	KerEv(IVTNo ivtNo);

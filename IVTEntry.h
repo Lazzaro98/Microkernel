@@ -7,44 +7,44 @@
 
 #ifndef IVTENTRY_H_
 #define IVTENTRY_H_
+#define Nt 256
 #include "KerEv.h"
 
+typedef void interrupt (*pInterrupt)(...);
 typedef unsigned char IVTNo;
 
-#define PREPAREENTRY(numEntry,callOldF)\
+
+#define PREPAREENTRY(numEntry,oldF)\
 		void interrupt inter##numEntry(...);\
 		IVTEntry newEntry##numEntry(numEntry,inter##numEntry);\
 		void interrupt inter##numEntry(...){\
 			newEntry##numEntry.signal();\
-			if(callOldF!=0)\
-				newEntry##numEntry.callOld();\
+			if(oldF!=0)\
+				newEntry##numEntry.old();\
 		}
 
-#define num 256
 
-typedef void interrupt (*pInterrupt)(...);
 
 class IVTEntry {
 public:
-
-
 	friend class Event;
+	friend class Semaphore;
 	friend class KerEv;
 
-	KerEv* myImpl;
+	volatile static IVTEntry* table[Nt];
 
 	void signal();
-	void callOld();
 	IVTEntry(IVTNo ivtNo, pInterrupt pint);
 	virtual ~IVTEntry();
 
+	KerEv* myImpl;
+
+
+	void old();
 	static void dodaj(IVTNo ivtNo, KerEv* x);
-	volatile static IVTEntry* table[num];
-private:
 
+	pInterrupt oldRout;
 	IVTNo ivtNo;
-
-	pInterrupt oldRoutine;
 };
 
 #endif /* IVTENTRY_H_ */
